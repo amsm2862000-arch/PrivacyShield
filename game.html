@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>PrivacyShield - لعبة حماة الخصوصية لحيتان ياهلو</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0d1117;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* لوحة الصدارة الفاخرة المستوحاة من تصاميم ياهلو للـ VIP */
+        #whale-board {
+            width: 100%;
+            background: linear-gradient(90deg, #d4af37, #f3e5ab, #aa7c11, #d4af37);
+            color: #000;
+            text-align: center;
+            padding: 12px 0;
+            font-weight: bold;
+            font-size: 15px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.6);
+            z-index: 10;
+            border-bottom: 2px solid #fff;
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 4px 15px rgba(212, 175, 55, 0.5); }
+            to { box-shadow: 0 4px 25px rgba(255, 223, 0, 0.9); }
+        }
+
+        /* حاوية اللعبة للمتصفح */
+        #game-container {
+            position: relative;
+            width: 92vw;
+            height: 60vh;
+            border: 2px solid #30363d;
+            border-radius: 20px;
+            margin-top: 20px;
+            background: radial-gradient(circle, #1f242c 0%, #0d1117 100%);
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        /* درع الحماية الخاص بمشروعك في المنتصف بالأسفل */
+        #shield {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 45px;
+            text-align: center;
+            text-shadow: 0 0 20px #58a6ff;
+            font-weight: bold;
+        }
+
+        #shield small {
+            font-size: 12px;
+            display: block;
+            color: #58a6ff;
+            margin-top: 5px;
+        }
+
+        /* الفيروسات والمخترقين المتساقطين */
+        .virus {
+            position: absolute;
+            font-size: 35px;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+        }
+
+        /* عداد النقاط للاعب */
+        #score-board {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 16px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+        }
+
+        /* زر دعم الحيتان المستهدف للتبرع للحملة */
+        #support-btn {
+            width: 92vw;
+            padding: 16px;
+            margin-top: 25px;
+            background: linear-gradient(135deg, #238636, #2ea44f);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(35, 134, 54, 0.4);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #support-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- لوحة الشرف الفاخرة للـ VIP -->
+    <div id="whale-board">
+        👑 حوت الصدارة الحالي: <span id="top-whale">في انتظار الداعم الأول...</span> 💎
+    </div>
+
+    <!-- منطقة اللعب على الهاتف -->
+    <div id="game-container">
+        <div id="score-board">النقاط: <span id="score">0</span></div>
+        <div id="shield">🛡️<small>PrivacyShield</small></div>
+    </div>
+
+    <!-- الزر الاستراتيجي لتوجيه الحيتان لرابط التبرع -->
+    <button id="support-btn" onclick="openGiveth()">🔥 اطلب دعم الحيتان وتخليد اسمك 🔥</button>
+
+    <script>
+        let score = 0;
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score');
+
+        // رابط حملتك ومستودعك على جيفيث وجيت هب للتبرع المباشر لبدء البرمجة والمعدات
+        const givethLink = "https://github.com"; 
+
+        function openGiveth() {
+            window.open(givethLink, '_blank');
+        }
+
+        // دالة إنشاء وإسقاط الفيروسات البرمجية
+        function createVirus() {
+            const virus = document.createElement('div');
+            virus.classList.add('virus');
+            virus.innerHTML = '👾'; 
+            
+            // تحديد موقع عشوائي أفقي متوافق مع حجم شاشة الهاتف
+            const maxWidth = gameContainer.clientWidth - 40;
+            virus.style.left = Math.random() * maxWidth + 'px';
+            virus.style.top = '0px';
+            
+            gameContainer.appendChild(virus);
+            
+            let posY = 0;
+            let speed = 4; // سرعة سقوط الفيروس تناسب اللعب السريع لغرف ياهلو
+            
+            let interval = setInterval(() => {
+                posY += speed;
+                virus.style.top = posY + 'px';
+                
+                // إذا لم يلمسها اللاعب ووصلت لخط الدفاع السفلي
+                if (posY > gameContainer.clientHeight - 90) {
+                    clearInterval(interval);
+                    virus.remove();
+                }
+            }, 20);
+            
+            // تدمير الفيروس عند قيام لاعب ياهلو بلمسه بإصبعه على شاشة الأندرويد
+            const destroyEvent = (e) => {
+                e.preventDefault();
+                score += 10;
+                scoreDisplay.innerText = score;
+                clearInterval(interval);
+                virus.remove();
+            };
+
+            virus.addEventListener('touchstart', destroyEvent);
+            virus.addEventListener('mousedown', destroyEvent);
+        }
+
+        // توليد فيروس جديد بشكل دوري ومستمر لإنشاء الحماس والتنافس
+        setInterval(createVirus, 1200);
+
+        // محاكاة حية لعرض اسم حوت الصدارة لتحفيز "الإيغو" لدى الـ VIP في ياهلو
+        // سنقوم في خطوتنا التالية بربط هذه اللوحة بقاعدة بيانات حية لتحديث الأسماء تلقائياً بأسماء المتبرعين الفعليين!
+        document.getElementById('top-whale').innerText = "الحوت أبو راكان (تطوع بـ $500) 🥇";
+    </script>
+</body>
+  </html>
+  
