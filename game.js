@@ -163,3 +163,47 @@ function gameLoop(timestamp) {
 
 // بدء تشغيل المحرك مع تمرير الوقت الإفتراضي للـ Loop
 requestAnimationFrame(gameLoop);
+// 7. نظام المؤقت التنازلي وشاشة نهاية اللعبة (Game Over)
+const gameTimer = setInterval(function() {
+    if (!gameActive) {
+        clearInterval(gameTimer);
+        return;
+    }
+    
+    timeLeft--;
+    timerEl.textContent = timeLeft;
+    
+    // عند انتهاء الـ 60 ثانية
+    if (timeLeft <= 0) {
+        gameActive = false;
+        clearInterval(gameTimer);
+        showGameOver();
+    }
+}, 1000);
+
+// دالة إظهار شاشة نهاية اللعبة وتجميد العناصر
+function showGameOver() {
+    // رسم خلفية شبه شفافة داكنة فوق اللعبة
+    ctx.fillStyle = 'rgba(13, 17, 23, 0.85)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // كتابة نص النهاية بتأثير نيون متوهج
+    ctx.font = 'bold 32px sans-serif';
+    ctx.fillStyle = '#ff3333';
+    ctx.textAlign = 'center';
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#ff3333';
+    ctx.fillText('انتهى جدار الحماية! ⚠️', canvas.width / 2, canvas.height / 2 - 40);
+    
+    // عرض النتيجة النهائية للاعب التنافسي
+    ctx.shadowBlur = 0;
+    ctx.font = '20px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`مجموع النقاط المحصودة: ${score}`, canvas.width / 2, canvas.height / 2 + 10);
+    
+    // زر إعادة اللعب السريع
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillStyle = '#00ffcc';
+    ctx.fillText('قم بتحديث الصفحة لإعادة المحاولة 🔄', canvas.width / 2, canvas.height / 2 + 70);
+                                            }
+    
