@@ -6,7 +6,6 @@ const timerEl = document.getElementById('timer');
 const whaleNameEl = document.getElementById('whale-name');
 const whaleAmountEl = document.getElementById('whale-amount');
 
-// إعداد أبعاد الـ Canvas لتملأ شاشة الهاتف تماماً
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -19,46 +18,108 @@ let score = 0;
 let timeLeft = 60;
 let gameActive = true;
 
-// بيانات الحوت الافتراضية (سيتم تحديثها ديناميكياً لاحقاً)
 let currentWhale = {
     name: "الحوت_السيبراني_الرئيسي",
     amount: "1.50 ETH"
 };
 
-// تحديث لوحة الشرف الفاخرة بالبيانات الحالية
 function updateWhalesWall() {
     whaleNameEl.textContent = currentWhale.name;
     whaleAmountEl.textContent = currentWhale.amount;
 }
 updateWhalesWall();
 
-// 3. إعدادات درع الحماية (PrivacyShield) في منتصف الشاشة
+// 3. إعدادات درع الحماية (PrivacyShield)
 const shield = {
     x: canvas.width / 2,
-    y: canvas.height / 2 + 50, // منخفض قليلاً عن المنتصف ليترك مساحة للفيروسات الساقطة
+    y: canvas.height / 2 + 50,
     radius: 40,
-    color: '#00ffcc', // لون سيبراني متوهج للدرع
-    pulse: 0 // متغير لعمل تأثير نبض بصري للدرع
+    color: '#00ffcc',
+    pulse: 0
 };
 
-// 4. دالة رسم درع الحماية وتأثير النبض
+// 4. مصفوفة وإعدادات الفيروسات (البرمجيات الخبيثة)
+let viruses = [];
+let lastVirusSpawn = 0;
+let spawnInterval = 1000; // سرعة ظهور فيروس جديد (ملي ثانية) وكلما قل الوقت تزداد الصعوبة
+let baseVirusSpeed = 2; // السرعة الأساسية لسقوط الفيروسات
+
+// دالة لتوليد فيروس جديد في مصفوفة اللعبة
+function spawnVirus() {
+    // تحديد نوع الفيروس وألوان سيبرانية مختلفة عشوائياً
+    const colors = ['#ff3333', '#ff0055', '#ff9900', '#cc00ff'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    const virus = {
+        x: Math.random() * canvas.width, // يظهر في مكان أفقي عشوائي
+        y: -20, // يبدأ من أعلى الشاشة تماماً خارج الرؤية
+        radius: Math.random() * 8 + 12, // أحجام متفاوتة للفيروسات
+        color: randomColor,
+        speed: baseVirusSpeed + Math.random() * 1.5 // سرعات متفاوتة قليلاً للحماس
+    };
+    viruses.push(virus);
+}
+
+// 5. دالة تحديث حركة الفيروسات وفحص اصطدامها بالدرع
+function updateViruses() {
+    for (let i = viruses.length - 1; i >= 0; i--) {
+        let v = viruses[i];
+        
+        // الفيروسات تتحرك نحو الأسفل والمنتصف باتجاه الدرع
+        // حساب الاتجاه الرياضي نحو الدرع
+        let dx = shield.x - v.x;
+        let dy = shield.y - v.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // تحريك الفيروس خطوة بخطوة نحو الدرع
+        v.x += (dx / distance) * v.speed;
+        v.y += (dy / distance) * v.speed;
+        
+        // فحص الاصطدام: إذا لمس الفيروس درع الحماية
+        if (distance < shield.radius + v.radius) {
+            // حذف الفيروس من المصفوفة عند الاصطدام
+            viruses.splice(i, 1);
+            // تقليل النقاط كعقوبة للاختراق (لا تنزل عن صفر)
+            score = Math.max(0, score - 5);
+            scoreEl.textContent = score;
+            continue;
+        }
+        
+        // حذف الفيروس إذا خرج تماماً عن حدود الشاشة السفلية لحفظ الذاكرة لأجهزة الهاتف
+        if (v.y > canvas.height + 20) {
+            viruses.splice(i, 1);
+        }
+    }
+}
+
+// دالة رسم الفيروسات على الشاشة بتأثير سيبراني مدبب
+function drawViruses() {
+    viruses.forEach(v => {
+        ctx.beginPath();
+        ctx.arc(v.x, v.y, v.radius, 0, Math.PI * 2);
+        ctx.fillStyle = v.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = v.color; // توهج نيون بلون الفيروس
+        ctx.fill();
+        ctx.closePath();
+        
+        // تصفير التوهج حتى لا يؤثر على بقية العناصر المرسومة
+        ctx.shadowBlur = 0;
+    });
+}
+
 function drawShield() {
-    // زيادة النبض البصري بشكل مستمر
     shield.pulse += 0.05;
     let pulseRadius = shield.radius + Math.sin(shield.pulse) * 4;
 
-    // رسم هالة التوهج الخارجي للدرع
     ctx.beginPath();
     ctx.arc(shield.x, shield.y, pulseRadius + 8, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(0, 255, 220, 0.15)';
     ctx.fill();
     ctx.closePath();
 
-    // رسم الدرع الأساسي الداخلي
     ctx.beginPath();
     ctx.arc(shield.x, shield.y, shield.radius, 0, Math.PI * 2);
-    ctx.fillStyle = shield.color;
-    // إضافة تدرج لوني ليعطي مظهر ثلاثي الأبعاد
     let gradient = ctx.createRadialGradient(shield.x, shield.y, 5, shield.x, shield.y, shield.radius);
     gradient.addColorStop(0, '#ffffff');
     gradient.addColorStop(0.3, '#00ffcc');
@@ -67,7 +128,6 @@ function drawShield() {
     ctx.fill();
     ctx.closePath();
 
-    // رسم علامة قفل أو رمز مبسط داخل الدرع لحماية الهوية
     ctx.fillStyle = '#090d16';
     ctx.fillRect(shield.x - 8, shield.y - 4, 16, 14);
     ctx.beginPath();
@@ -78,20 +138,28 @@ function drawShield() {
     ctx.closePath();
 }
 
-// 5. حلقة اللعبة الرئيسية (Game Loop) لتحديث الشاشة باستمرار
-function gameLoop() {
+// 6. حلقة اللعبة الرئيسية (Game Loop) المحدثة
+function gameLoop(timestamp) {
     if (!gameActive) return;
 
-    // مسح الشاشة في كل إطار لإعادة الرسم
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // رسم الدرع
+    // إدارة توقيت ظهور الفيروسات وزيادة الصعوبة مع الوقت
+    if (timestamp - lastVirusSpawn > spawnInterval) {
+        spawnVirus();
+        lastVirusSpawn = timestamp;
+        
+        // زيادة الصعوبة تدريجياً بتقليل زمن الظهور
+        if (spawnInterval > 300) spawnInterval -= 5;
+    }
+
+    // تحديث ورسم العناصر
+    updateViruses();
+    drawViruses();
     drawShield();
 
-    // استدعاء الإطار القادم للحفاظ على سلاسة الحركة (60 إطار في الثانية)
     requestAnimationFrame(gameLoop);
 }
 
-// تشغيل محرك اللعبة لأول مرة
-gameLoop();
-      
+// بدء تشغيل المحرك مع تمرير الوقت الإفتراضي للـ Loop
+requestAnimationFrame(gameLoop);
