@@ -48,10 +48,14 @@ function spawnVirus() {
     const colors = ['#ff3333', '#ff0055', '#ff9900', '#cc00ff'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     
+    // جعل الفيروسات تظهر بعيداً عن الحواف لسهولة الضغط
+    const padding = 30;
+    const randomX = padding + Math.random() * (canvas.width - padding * 2);
+    
     const virus = {
-        x: Math.random() * canvas.width, 
+        x: randomX, 
         y: -20, 
-        radius: Math.random() * 8 + 12, 
+        radius: Math.random() * 6 + 16, // تكبير حجم الفيروس قليلاً لسهولة صيده باللمس
         color: randomColor,
         speed: baseVirusSpeed + Math.random() * 1.5 
     };
@@ -125,7 +129,15 @@ function drawShield() {
     ctx.closePath();
 }
 
-// 5. برمجة الدفاع السريع باللمس (Touch Events) للهواتف
+// 5. دالة حساب الإحداثيات الدقيقة للمس على الهواتف والشاشات المختلفة
+function getTouchPos(clientX, clientY) {
+    let rect = canvas.getBoundingClientRect();
+    return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
+}
+
 function handleDefense(touchX, touchY) {
     if (!gameActive) return;
 
@@ -135,7 +147,8 @@ function handleDefense(touchX, touchY) {
         let dy = touchY - v.y;
         let distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance < v.radius + 15) {
+        // زيادة مساحة اللمس المحيطة بالفيروس لتسهيل الصيد بالإصبع
+        if (distance < v.radius + 25) {
             viruses.splice(i, 1);
             score += 10;
             scoreEl.textContent = score;
@@ -146,18 +159,16 @@ function handleDefense(touchX, touchY) {
 
 canvas.addEventListener('touchstart', function(e) {
     e.preventDefault();
-    let touch = e.touches;
-    let rect = canvas.getBoundingClientRect();
-    let touchX = touch.clientX - rect.left;
-    let touchY = touch.clientY - rect.top;
-    handleDefense(touchX, touchY);
+    if(e.touches.length > 0) {
+        let touch = e.targetTouches[0];
+        let pos = getTouchPos(touch.clientX, touch.clientY);
+        handleDefense(pos.x, pos.y);
+    }
 }, { passive: false });
 
 canvas.addEventListener('mousedown', function(e) {
-    let rect = canvas.getBoundingClientRect();
-    let mouseX = e.clientX - rect.left;
-    let mouseY = e.clientY - rect.top;
-    handleDefense(mouseX, mouseY);
+    let pos = getTouchPos(e.clientX, e.clientY);
+    handleDefense(pos.x, pos.y);
 });
 
 // 6. حلقة اللعبة الرئيسية (Game Loop)
