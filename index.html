@@ -1,1 +1,35 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>قناص الاختراقات | Cyber-Shield Defend</title>
+    <!-- ربط ملف التصميم الذي سننشئه في الخطوة القادمة -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- لوحة شرف الـ VIP الفاخرة (Whales Wall) -->
+    <div id="whales-wall" class="whales-container">
+        <div class="whale-badge">👑 الحوت الإمبراطوري</div>
+        <div class="whale-info">
+            <span id="whale-name">جاري التحميل...</span>
+            <span id="whale-amount" class="gold-text">0.00 ETH</span>
+        </div>
+    </div>
+
+    <!-- شاشة اللعبة الأساسية (منطقة تساقط الفيروسات) -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- شريط معلومات اللعبة السفلي وزر الدعم الجوي -->
+    <div class="game-ui">
+        <div class="ui-box">⏱️ <span id="timer">60</span>s</div>
+        <button id="air-support-btn" class="glow-button">🚀 طلب دعم جوي</button>
+        <div class="ui-box">⭐ <span id="score">0</span></div>
+    </div>
+
+    <!-- ربط ملف البرمجة للخطوات القادمة -->
+    <script src="game.js"></script>
+</body>
+</html>
 
