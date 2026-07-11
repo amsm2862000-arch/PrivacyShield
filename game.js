@@ -38,72 +38,59 @@ const shield = {
     pulse: 0
 };
 
-// 4. مصفوفة وإعدادات الفيروسات (البرمجيات الخبيثة)
+// 4. مصفوفة وإعدادات الفيروسات
 let viruses = [];
 let lastVirusSpawn = 0;
-let spawnInterval = 1000; // سرعة ظهور فيروس جديد (ملي ثانية) وكلما قل الوقت تزداد الصعوبة
-let baseVirusSpeed = 2; // السرعة الأساسية لسقوط الفيروسات
+let spawnInterval = 1000; 
+let baseVirusSpeed = 2; 
 
-// دالة لتوليد فيروس جديد في مصفوفة اللعبة
 function spawnVirus() {
-    // تحديد نوع الفيروس وألوان سيبرانية مختلفة عشوائياً
     const colors = ['#ff3333', '#ff0055', '#ff9900', '#cc00ff'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     
     const virus = {
-        x: Math.random() * canvas.width, // يظهر في مكان أفقي عشوائي
-        y: -20, // يبدأ من أعلى الشاشة تماماً خارج الرؤية
-        radius: Math.random() * 8 + 12, // أحجام متفاوتة للفيروسات
+        x: Math.random() * canvas.width, 
+        y: -20, 
+        radius: Math.random() * 8 + 12, 
         color: randomColor,
-        speed: baseVirusSpeed + Math.random() * 1.5 // سرعات متفاوتة قليلاً للحماس
+        speed: baseVirusSpeed + Math.random() * 1.5 
     };
     viruses.push(virus);
 }
 
-// 5. دالة تحديث حركة الفيروسات وفحص اصطدامها بالدرع
 function updateViruses() {
     for (let i = viruses.length - 1; i >= 0; i--) {
         let v = viruses[i];
         
-        // الفيروسات تتحرك نحو الأسفل والمنتصف باتجاه الدرع
-        // حساب الاتجاه الرياضي نحو الدرع
         let dx = shield.x - v.x;
         let dy = shield.y - v.y;
         let distance = Math.sqrt(dx * dx + dy * dy);
         
-        // تحريك الفيروس خطوة بخطوة نحو الدرع
         v.x += (dx / distance) * v.speed;
         v.y += (dy / distance) * v.speed;
         
-        // فحص الاصطدام: إذا لمس الفيروس درع الحماية
         if (distance < shield.radius + v.radius) {
-            // حذف الفيروس من المصفوفة عند الاصطدام
             viruses.splice(i, 1);
-            // تقليل النقاط كعقوبة للاختراق (لا تنزل عن صفر)
             score = Math.max(0, score - 5);
             scoreEl.textContent = score;
             continue;
         }
         
-        // حذف الفيروس إذا خرج تماماً عن حدود الشاشة السفلية لحفظ الذاكرة لأجهزة الهاتف
         if (v.y > canvas.height + 20) {
             viruses.splice(i, 1);
         }
     }
 }
 
-// دالة رسم الفيروسات على الشاشة بتأثير سيبراني مدبب
 function drawViruses() {
     viruses.forEach(v => {
         ctx.beginPath();
         ctx.arc(v.x, v.y, v.radius, 0, Math.PI * 2);
         ctx.fillStyle = v.color;
         ctx.shadowBlur = 10;
-        ctx.shadowColor = v.color; // توهج نيون بلون الفيروس
+        ctx.shadowColor = v.color; 
         ctx.fill();
         ctx.closePath();
-        
-        // تصفير التوهج حتى لا يؤثر على بقية العناصر المرسومة
         ctx.shadowBlur = 0;
     });
 }
@@ -138,31 +125,61 @@ function drawShield() {
     ctx.closePath();
 }
 
-// 6. حلقة اللعبة الرئيسية (Game Loop) المحدثة
+// 5. برمجة الدفاع السريع باللمس (Touch Events) للهواتف
+function handleDefense(touchX, touchY) {
+    if (!gameActive) return;
+
+    for (let i = viruses.length - 1; i >= 0; i--) {
+        let v = viruses[i];
+        let dx = touchX - v.x;
+        let dy = touchY - v.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < v.radius + 15) {
+            viruses.splice(i, 1);
+            score += 10;
+            scoreEl.textContent = score;
+            break; 
+        }
+    }
+}
+
+canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    let touch = e.touches;
+    let rect = canvas.getBoundingClientRect();
+    let touchX = touch.clientX - rect.left;
+    let touchY = touch.clientY - rect.top;
+    handleDefense(touchX, touchY);
+}, { passive: false });
+
+canvas.addEventListener('mousedown', function(e) {
+    let rect = canvas.getBoundingClientRect();
+    let mouseX = e.clientX - rect.left;
+    let mouseY = e.clientY - rect.top;
+    handleDefense(mouseX, mouseY);
+});
+
+// 6. حلقة اللعبة الرئيسية (Game Loop)
 function gameLoop(timestamp) {
     if (!gameActive) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // إدارة توقيت ظهور الفيروسات وزيادة الصعوبة مع الوقت
     if (timestamp - lastVirusSpawn > spawnInterval) {
         spawnVirus();
         lastVirusSpawn = timestamp;
-        
-        // زيادة الصعوبة تدريجياً بتقليل زمن الظهور
         if (spawnInterval > 300) spawnInterval -= 5;
     }
 
-    // تحديث ورسم العناصر
     updateViruses();
     drawViruses();
     drawShield();
 
     requestAnimationFrame(gameLoop);
 }
-
-// بدء تشغيل المحرك مع تمرير الوقت الإفتراضي للـ Loop
 requestAnimationFrame(gameLoop);
+
 // 7. نظام المؤقت التنازلي وشاشة نهاية اللعبة (Game Over)
 const gameTimer = setInterval(function() {
     if (!gameActive) {
@@ -173,7 +190,6 @@ const gameTimer = setInterval(function() {
     timeLeft--;
     timerEl.textContent = timeLeft;
     
-    // عند انتهاء الـ 60 ثانية
     if (timeLeft <= 0) {
         gameActive = false;
         clearInterval(gameTimer);
@@ -181,13 +197,10 @@ const gameTimer = setInterval(function() {
     }
 }, 1000);
 
-// دالة إظهار شاشة نهاية اللعبة وتجميد العناصر
 function showGameOver() {
-    // رسم خلفية شبه شفافة داكنة فوق اللعبة
     ctx.fillStyle = 'rgba(13, 17, 23, 0.85)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // كتابة نص النهاية بتأثير نيون متوهج
     ctx.font = 'bold 32px sans-serif';
     ctx.fillStyle = '#ff3333';
     ctx.textAlign = 'center';
@@ -195,15 +208,39 @@ function showGameOver() {
     ctx.shadowColor = '#ff3333';
     ctx.fillText('انتهى جدار الحماية! ⚠️', canvas.width / 2, canvas.height / 2 - 40);
     
-    // عرض النتيجة النهائية للاعب التنافسي
     ctx.shadowBlur = 0;
     ctx.font = '20px sans-serif';
     ctx.fillStyle = '#ffffff';
     ctx.fillText(`مجموع النقاط المحصودة: ${score}`, canvas.width / 2, canvas.height / 2 + 10);
     
-    // زر إعادة اللعب السريع
     ctx.font = 'bold 16px sans-serif';
     ctx.fillStyle = '#00ffcc';
     ctx.fillText('قم بتحديث الصفحة لإعادة المحاولة 🔄', canvas.width / 2, canvas.height / 2 + 70);
-                                            }
+}
+
+// 8. محرك التبرع الذكي وتفعيل القوة الخارقة (الدعم الجوي)
+const airSupportBtn = document.getElementById('air-support-btn');
+
+airSupportBtn.addEventListener('click', function() {
+    window.open('https://giveth.io/es/project/from-rubble-to-code:-help-a-dev-rebuild-his-life', '_blank');
+});
+
+function triggerImperialShield(newWhaleName, donationAmount) {
+    if (!gameActive) return;
     
+    currentWhale.name = newWhaleName;
+    currentWhale.amount = donationAmount;
+    updateWhalesWall();
+    
+    viruses = [];
+    
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    shield.radius = 80; 
+    setTimeout(() => {
+        shield.radius = 40; 
+    }, 2000);
+    
+    alert(`👑 الحوت [${newWhaleName}] يطلق درع الحماية الإمبراطوري الآن!`);
+}
